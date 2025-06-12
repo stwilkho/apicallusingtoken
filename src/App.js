@@ -271,9 +271,9 @@ const ParcelPerfectApp = () => {
           <div className="text-center mb-8">
             <div className="flex items-center justify-center mb-4">
               <Package className="text-blue-600 mr-3" size={40} />
-              <h1 className="text-4xl font-bold text-gray-800">Parcel Perfect</h1>
+              <h1 className="text-4xl font-bold text-gray-800"> </h1>
             </div>
-            <p className="text-gray-600">eCommerce API Client</p>
+            <p className="text-gray-600"> </p>
             {token ? (
               <div className="mt-4 flex items-center justify-center">
                 <CheckCircle className="text-green-500 mr-2" size={20} />
@@ -322,69 +322,12 @@ const ParcelPerfectApp = () => {
                     <div className="bg-blue-50 p-4 rounded-lg mb-4">
                       <h3 className="font-semibold text-blue-800 mb-2">Built-in Token Configuration</h3>
                       <p className="text-sm text-blue-700 mb-3">
-                        This app is configured with a built-in token ID. To use your own token:
+                        This app is configured with a built-in token ID.
                       </p>
-                      <ol className="text-sm text-blue-700 space-y-1">
-                        <li>1. Replace the BUILT_IN_TOKEN constant in the code</li>
-                        <li>2. Set it to your actual token ID</li>
-                        <li>3. The app will automatically authenticate on load</li>
-                      </ol>
                     </div>
-                    
-                    {token ? (
-                      <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                        <div className="flex items-center mb-2">
-                          <CheckCircle className="text-green-500 mr-2" size={16} />
-                          <span className="text-green-700 font-medium text-sm">Built-in Token Active</span>
-                        </div>
-                        <p className="text-xs text-green-600 font-mono break-all">
-                          {token.substring(0, 20)}...
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-                        <div className="flex items-center mb-2">
-                          <XCircle className="text-red-500 mr-2" size={16} />
-                          <span className="text-red-700 font-medium text-sm">Token Authentication Failed</span>
-                        </div>
-                        <p className="text-xs text-red-600">
-                          The built-in token is either invalid, expired, or not configured properly.
-                        </p>
-                      </div>
-                    )}
                   </div>
                   
-                  <div>
-                    <div className="bg-yellow-50 p-4 rounded-lg">
-                      <h3 className="font-semibold text-yellow-800 mb-2">Token Configuration</h3>
-                      <p className="text-sm text-yellow-700 mb-3">
-                        Current built-in token status:
-                      </p>
-                      <div className="text-sm text-yellow-700">
-                        {BUILT_IN_TOKEN === 'your-token-id-here' ? (
-                          <p className="text-red-600 font-medium">
-                            ⚠️ Token not configured - please replace BUILT_IN_TOKEN with your actual token
-                          </p>
-                        ) : (
-                          <p className="text-green-600 font-medium">
-                            ✅ Token configured and ready for validation
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div className="mt-4 bg-gray-50 p-4 rounded-lg">
-                      <h3 className="font-semibold text-gray-800 mb-2">How to get Token ID</h3>
-                      <ol className="text-sm text-gray-600 space-y-1">
-                        <li>1. Contact Parcel Perfect support</li>
-                        <li>2. Email: <strong>support@parcelperfect.com</strong></li>
-                        <li>3. Subject: "Request for ecom test account"</li>
-                        <li>4. Replace BUILT_IN_TOKEN in the code</li>
-                      </ol>
-                    </div>
-                  </div>
                 </div>
-                <ResponseDisplay title="Authentication Response" data={responses.auth} />
               </div>
             )}
 
