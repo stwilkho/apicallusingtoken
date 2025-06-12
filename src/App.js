@@ -1,12 +1,14 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { AlertCircle, Package, MapPin, Truck, FileText, Clock, CheckCircle, XCircle } from 'lucide-react';
 
 const ParcelPerfectApp = () => {
+  // Built-in token ID - replace this with your actual token
+  const BUILT_IN_TOKEN = '30a40d09ce1b68b6f3567588a7d5e39842431844'; // Replace with actual token
+  
   // State management
-  const [tokenInput, setTokenInput] = useState('');
-  const [token, setToken] = useState(null);
+  const [token, setToken] = useState(BUILT_IN_TOKEN);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('auth');
+  const [activeTab, setActiveTab] = useState('places'); // Start with places since auth is automatic
   const [responses, setResponses] = useState({});
   const [quoteData, setQuoteData] = useState({
     origPlace: '',
@@ -37,13 +39,52 @@ const ParcelPerfectApp = () => {
       const data = await response.json();
       
       // Check if the response indicates a valid token
-      // Adjust this logic based on actual API response format
       return !data.error && response.ok;
     } catch (error) {
       console.error('Token test failed:', error);
       return false;
     }
   };
+
+  // Auto-validate token on component mount
+  useEffect(() => {
+    const validateBuiltInToken = async () => {
+      if (BUILT_IN_TOKEN && BUILT_IN_TOKEN !== 'your-token-id-here') {
+        setLoading(true);
+        try {
+          const isValid = await testToken(BUILT_IN_TOKEN);
+          if (isValid) {
+            setResponses(prev => ({
+              ...prev,
+              auth: { success: true, token: BUILT_IN_TOKEN, method: 'built-in' }
+            }));
+          } else {
+            setResponses(prev => ({
+              ...prev,
+              auth: { success: false, error: 'Built-in token is invalid or expired', method: 'built-in' }
+            }));
+            setToken(null);
+            setActiveTab('auth');
+          }
+        } catch (error) {
+          setResponses(prev => ({
+            ...prev,
+            auth: { success: false, error: error.message, method: 'built-in' }
+          }));
+          setToken(null);
+          setActiveTab('auth');
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        // No valid built-in token, show auth tab
+        setToken(null);
+        setActiveTab('auth');
+      }
+    };
+
+    validateBuiltInToken();
+  }, []);
 
   // Generic API call function
   const makeApiCall = useCallback(async (method, className, params, useToken = true) => {
@@ -76,48 +117,6 @@ const ParcelPerfectApp = () => {
       setLoading(false);
     }
   }, [token]);
-
-  // Token-based authentication
-  const authenticateWithToken = async () => {
-    if (!tokenInput.trim()) {
-      alert('Please enter a token ID');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      // Test if the token is valid by making a simple API call
-      const isValid = await testToken(tokenInput.trim());
-      
-      if (isValid) {
-        setToken(tokenInput.trim());
-        setResponses(prev => ({
-          ...prev,
-          auth: { success: true, token: tokenInput.trim(), method: 'token_id' }
-        }));
-        setActiveTab('places');
-        alert('Token authentication successful!');
-      } else {
-        throw new Error('Invalid token or token expired');
-      }
-    } catch (error) {
-      setResponses(prev => ({
-        ...prev,
-        auth: { success: false, error: error.message, method: 'token_id' }
-      }));
-      alert(`Token authentication failed: ${error.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const clearToken = () => {
-    setToken(null);
-    setTokenInput('');
-    setResponses(prev => ({ ...prev, auth: null }));
-    setActiveTab('auth');
-    alert('Token cleared successfully');
-  };
 
   // Place lookup functions
   const getPlacesByName = async (name) => {
@@ -275,16 +274,15 @@ const ParcelPerfectApp = () => {
               <h1 className="text-4xl font-bold text-gray-800">Parcel Perfect</h1>
             </div>
             <p className="text-gray-600">eCommerce API Client</p>
-            {token && (
+            {token ? (
               <div className="mt-4 flex items-center justify-center">
                 <CheckCircle className="text-green-500 mr-2" size={20} />
-                <span className="text-green-700 font-medium">Authenticated</span>
-                <button
-                  onClick={clearToken}
-                  className="ml-4 px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600"
-                >
-                  Clear Token
-                </button>
+                <span className="text-green-700 font-medium">Authenticated with Built-in Token</span>
+              </div>
+            ) : (
+              <div className="mt-4 flex items-center justify-center">
+                <XCircle className="text-red-500 mr-2" size={20} />
+                <span className="text-red-700 font-medium">Built-in Token Invalid - Manual Auth Required</span>
               </div>
             )}
           </div>
@@ -304,7 +302,7 @@ const ParcelPerfectApp = () => {
                   activeTab === id
                     ? 'bg-blue-500 text-white'
                     : 'text-gray-600 hover:bg-gray-100'
-                }`}
+                } ${id !== 'auth' && !token ? 'opacity-50 cursor-not-allowed' : ''}`}
                 disabled={id !== 'auth' && !token}
               >
                 <Icon size={18} className="mr-2" />
@@ -318,72 +316,71 @@ const ParcelPerfectApp = () => {
             {/* Authentication Tab */}
             {activeTab === 'auth' && (
               <div>
-                <h2 className="text-2xl font-bold mb-6 text-gray-800">Token Authentication</h2>
+                <h2 className="text-2xl font-bold mb-6 text-gray-800">Authentication Status</h2>
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Token ID
-                        </label>
-                        <textarea
-                          value={tokenInput}
-                          onChange={(e) => setTokenInput(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                          placeholder="Enter your token ID here..."
-                          rows={4}
-                        />
-                        <p className="text-xs text-gray-500 mt-1">
-                          Paste your pre-generated token ID from Parcel Perfect
-                        </p>
-                      </div>
-                      <button
-                        onClick={authenticateWithToken}
-                        disabled={loading}
-                        className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 disabled:opacity-50 flex items-center justify-center"
-                      >
-                        {loading ? (
-                          <>
-                            <Clock className="animate-spin mr-2" size={18} />
-                            Validating Token...
-                          </>
-                        ) : (
-                          'Authenticate with Token'
-                        )}
-                      </button>
-                      
-                      {/* Token Management */}
-                      {token && (
-                        <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                          <div className="flex items-center mb-2">
-                            <CheckCircle className="text-green-500 mr-2" size={16} />
-                            <span className="text-green-700 font-medium text-sm">Token Active</span>
-                          </div>
-                          <p className="text-xs text-green-600 font-mono break-all">
-                            {token.substring(0, 20)}...
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div>
                     <div className="bg-blue-50 p-4 rounded-lg mb-4">
-                      <h3 className="font-semibold text-blue-800 mb-2">How to get Token ID</h3>
-                      <ol className="text-sm text-blue-700 space-y-2">
-                        <li>1. Contact Parcel Perfect support for test credentials</li>
-                        <li>2. Email: <strong>support@parcelperfect.com</strong></li>
-                        <li>3. Subject: "Request for ecom test account"</li>
-                        <li>4. They will provide you with a token ID</li>
+                      <h3 className="font-semibold text-blue-800 mb-2">Built-in Token Configuration</h3>
+                      <p className="text-sm text-blue-700 mb-3">
+                        This app is configured with a built-in token ID. To use your own token:
+                      </p>
+                      <ol className="text-sm text-blue-700 space-y-1">
+                        <li>1. Replace the BUILT_IN_TOKEN constant in the code</li>
+                        <li>2. Set it to your actual token ID</li>
+                        <li>3. The app will automatically authenticate on load</li>
                       </ol>
                     </div>
                     
+                    {token ? (
+                      <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                        <div className="flex items-center mb-2">
+                          <CheckCircle className="text-green-500 mr-2" size={16} />
+                          <span className="text-green-700 font-medium text-sm">Built-in Token Active</span>
+                        </div>
+                        <p className="text-xs text-green-600 font-mono break-all">
+                          {token.substring(0, 20)}...
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                        <div className="flex items-center mb-2">
+                          <XCircle className="text-red-500 mr-2" size={16} />
+                          <span className="text-red-700 font-medium text-sm">Token Authentication Failed</span>
+                        </div>
+                        <p className="text-xs text-red-600">
+                          The built-in token is either invalid, expired, or not configured properly.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div>
                     <div className="bg-yellow-50 p-4 rounded-lg">
-                      <h3 className="font-semibold text-yellow-800 mb-2">Token Authentication</h3>
-                      <p className="text-sm text-yellow-700">
-                        This method uses a pre-generated token ID directly, bypassing the 
-                        username/password authentication flow. Your token should be provided 
-                        by Parcel Perfect.
+                      <h3 className="font-semibold text-yellow-800 mb-2">Token Configuration</h3>
+                      <p className="text-sm text-yellow-700 mb-3">
+                        Current built-in token status:
                       </p>
+                      <div className="text-sm text-yellow-700">
+                        {BUILT_IN_TOKEN === 'your-token-id-here' ? (
+                          <p className="text-red-600 font-medium">
+                            ⚠️ Token not configured - please replace BUILT_IN_TOKEN with your actual token
+                          </p>
+                        ) : (
+                          <p className="text-green-600 font-medium">
+                            ✅ Token configured and ready for validation
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="mt-4 bg-gray-50 p-4 rounded-lg">
+                      <h3 className="font-semibold text-gray-800 mb-2">How to get Token ID</h3>
+                      <ol className="text-sm text-gray-600 space-y-1">
+                        <li>1. Contact Parcel Perfect support</li>
+                        <li>2. Email: <strong>support@parcelperfect.com</strong></li>
+                        <li>3. Subject: "Request for ecom test account"</li>
+                        <li>4. Replace BUILT_IN_TOKEN in the code</li>
+                      </ol>
                     </div>
                   </div>
                 </div>
@@ -562,6 +559,23 @@ const ParcelPerfectApp = () => {
                     </div>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* Message for when token is not available */}
+            {!token && activeTab !== 'auth' && (
+              <div className="text-center py-12">
+                <XCircle className="mx-auto text-red-500 mb-4" size={48} />
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">Authentication Required</h3>
+                <p className="text-gray-600 mb-4">
+                  The built-in token is not configured or invalid. Please check the Authentication tab for setup instructions.
+                </p>
+                <button
+                  onClick={() => setActiveTab('auth')}
+                  className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                >
+                  Go to Authentication
+                </button>
               </div>
             )}
 
